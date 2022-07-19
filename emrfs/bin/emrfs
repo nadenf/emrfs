@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+bin=`readlink $0`
+if [ -z ${bin} ]; then
+  bin=`which $0`
+fi
+
+emrfs=`dirname ${bin}`
+emrfs=`cd ${emrfs}; cd ../; pwd`
+
+if [ -n "$HADOOP_HOME" ]; then
+  HADOOP_BIN_PATH="${HADOOP_HOME}/bin"
+fi
+
+HADOOP_BINARY=$(PATH="${HADOOP_BIN_PATH}:$PATH" which hadoop 2>/dev/null)
+
+HADOOP_BINARY_CLASSPATH=
+if [ -x "$HADOOP_BINARY" ]; then
+  HADOOP_BINARY_CLASSPATH=$("$HADOOP_BINARY" classpath)
+fi
+
+CLASSPATH="${emrfs}/lib/*:${emrfs}/cli/lib/*:${HADOOP_BINARY_CLASSPATH}"
+
+export JAVA_OPTS="-Xms48M -Xmx1024M"
+java -cp ${CLASSPATH} com.amazon.ws.emr.hadoop.fs.cli.Program "$@"
